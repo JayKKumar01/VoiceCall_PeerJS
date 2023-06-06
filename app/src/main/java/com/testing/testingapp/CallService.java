@@ -10,9 +10,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.IBinder;
-import android.util.Log;
-import android.view.View;
-import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -32,6 +29,7 @@ public class CallService extends Service implements CallServiceListener,Data{
     private NotificationManager notificationManager;
 
     public static CallServiceListener listener;
+    public static boolean isMute, isDeafen;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -40,7 +38,7 @@ public class CallService extends Service implements CallServiceListener,Data{
             code = intent.getStringExtra("code");
             userModel = (UserModel) intent.getSerializableExtra("userModel");
             if (intent.getStringExtra("type") != null && intent.getStringExtra("type").equals("create")){
-                createNotification(false);
+                createNotification(isMute, isDeafen);
             }
         }
 
@@ -103,7 +101,7 @@ public class CallService extends Service implements CallServiceListener,Data{
         if(call){
             callAllUsers(userList);
             FirebaseUtils.updateUserData(code, userModel);
-            createNotification(false);
+            createNotification(isMute,isDeafen);
         }
         else{
             onDisconnect();
@@ -112,8 +110,10 @@ public class CallService extends Service implements CallServiceListener,Data{
     }
 
     @Override
-    public void onToogleMic(boolean isMute) {
-
+    public void onToogleMic() {
+        isMute = !isMute;
+        callJavaScript("javascript:toggleAudio(\""+!isMute+"\")");
+        createNotification(isMute,isDeafen);
     }
 
     @Override
@@ -129,6 +129,14 @@ public class CallService extends Service implements CallServiceListener,Data{
         }
         stopSelf();
     }
+
+    @Override
+    public void onToogleDeafen() {
+        Toast.makeText(this, "Defean", Toast.LENGTH_SHORT).show();
+        isDeafen = !isDeafen;
+        createNotification(isMute,isDeafen);
+    }
+
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
@@ -144,7 +152,15 @@ public class CallService extends Service implements CallServiceListener,Data{
         }
         callJavaScript("javascript:startCall(" + stringBuilder.toString() + ");");
     }
-    private void createNotification(boolean isMute) {
+    private void createNotification(boolean isMute, boolean isDeafen) {
+
+
+        Intent callIntent = new Intent(this,CallActivity.class);
+        callIntent.putExtra("userModel", userModel);
+        callIntent.putExtra("code", code);
+        callIntent.putExtra("type","pendingIntent");
+        callIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, callIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         // Create an explicit intent for the activity that handles the button actions
         Intent intent = new Intent(this, CallNotificationActionReceiver.class);
         intent.setAction("com.testing.testingapp.ACTION_MUTE_HANGUP");
@@ -153,16 +169,21 @@ public class CallService extends Service implements CallServiceListener,Data{
         PendingIntent mutePendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE_MUTE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         intent.putExtra("requestCode", REQUEST_CODE_HANGUP);
         PendingIntent hangupPendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE_HANGUP, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        intent.putExtra("requestCode",REQUEST_CODE_DEAFEN);
+        PendingIntent deafenPendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE_DEAFEN, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         String muteLabel = isMute? "Unmute" : "Mute";
+        String deafenLabel = isDeafen? "Undeafen" : "Deafen";
         // Create the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.call)
                 .setContentTitle("Joining Call")
                 .setContentText("Tap to manage the call")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .addAction(R.drawable.call_end, "Disconnect", hangupPendingIntent)
                 .addAction(R.drawable.mic_on, muteLabel, mutePendingIntent)
-                .addAction(R.drawable.call_end, "Hangup", hangupPendingIntent)
+                .addAction(R.drawable.mic_on, deafenLabel, deafenPendingIntent)
+                .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .setOngoing(true);
 

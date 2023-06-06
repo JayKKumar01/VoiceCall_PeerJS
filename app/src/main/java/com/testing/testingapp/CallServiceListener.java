@@ -4,6 +4,7 @@ import java.util.List;
 
 public interface CallServiceListener {
     void onJoinCall(boolean join, List<UserModel> userList);
-    void onToogleMic(boolean isMute);
+    void onToogleMic();
     void onDisconnect();
+    void onToogleDeafen();
 }

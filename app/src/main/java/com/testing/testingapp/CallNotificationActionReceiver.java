@@ -24,9 +24,17 @@ public class CallNotificationActionReceiver extends BroadcastReceiver {
         int requestCode = intent1.getIntExtra("requestCode", -1);
 
         if (requestCode == CallActivity.REQUEST_CODE_MUTE) {
-            CallActivity.listener.OnToogleMic();
+            CallService.listener.onToogleMic();
+            if (CallActivity.listener != null) {
+                CallActivity.listener.OnToogleMic();
+            }
         } else if (requestCode == CallActivity.REQUEST_CODE_HANGUP) {
-            CallActivity.listener.OnHangUp();
+            CallService.listener.onDisconnect();
+            if (CallActivity.listener != null){
+                CallActivity.listener.OnHangUp();
+            }
+        } else if (requestCode == CallActivity.REQUEST_CODE_DEAFEN) {
+            CallService.listener.onToogleDeafen();
         }
     }
 }

@@ -48,7 +48,6 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
     private List<UserModel> userList;
     private String code;
 
-    WebView webView;
     UserModel userModel;
     public static boolean call,mic;
     private NotificationManager notificationManager;
@@ -59,6 +58,7 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_call);
+        listener = this;
         initViews();
 
         if (userModel != null) {
@@ -77,17 +77,18 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
         userNameTV = findViewById(R.id.userName);
         recyclerViewUsers = findViewById(R.id.recyclerViewUsers);
         recyclerViewUsers.setLayoutManager(new LinearLayoutManager(this));
-        webView = findViewById(R.id.webView);
         callBtn = findViewById(R.id.callBtn);
         micBtn = findViewById(R.id.micBtn);
 
         // Retrieve UserModel and code from the intent
         userModel = (UserModel) getIntent().getSerializableExtra("userModel");
         code = getIntent().getStringExtra("code");
+        boolean pendingIntent = false;
 
         Intent serviceIntent = new Intent(this, CallService.class);
         serviceIntent.putExtra("code", code);
         serviceIntent.putExtra("userModel", userModel);
+
 
 
 
@@ -98,12 +99,16 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
             micBtn.setVisibility(View.VISIBLE);
             //createNotification(mic);
         }
-        startService(serviceIntent);
-//        else if (getIntent().getStringExtra("type").equals("pending")){
-//            callBtn.setImageResource(R.drawable.call);
-//            call = true;
-//            micBtn.setVisibility(View.VISIBLE);
-//        }
+        else if (getIntent().getStringExtra("type") != null && getIntent().getStringExtra("type").equals("pendingIntent")){
+            pendingIntent = true;
+            callBtn.setImageResource(R.drawable.call);
+            call = true;
+            micBtn.setVisibility(View.VISIBLE);
+        }
+
+        if (!pendingIntent){
+            startService(serviceIntent);
+        }
     }
 
     private void updateUsers() {
@@ -128,43 +133,12 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
         });
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
-    public void setupWebView(){
-        webView.setWebChromeClient(new WebChromeClient(){
-            @Override
-            public void onPermissionRequest(PermissionRequest request) {
-                request.grant(request.getResources());
-            }
-        });
-
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
-        String path = "file:android_asset/call.html";
-        webView.loadUrl(path);
-
-        webView.setWebViewClient(new WebViewClient(){
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                boolean x = !url.equals("file:///android_asset/call.html");
-                if(x){
-                    Toast.makeText(CallActivity.this, "Returned!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                callJavaScript("javascript:init(\""+ userModel.getUserId() +"\")");
-                Toast.makeText(CallActivity.this, "Started", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
     public void joinCall(View view){
         call = !call;
         CallService.listener.onJoinCall(call,userList);
         if(call){
             callBtn.setImageResource(R.drawable.call);
             micBtn.setVisibility(View.VISIBLE);
-//            callAllUsers(userList);
-//            FirebaseUtils.updateUserData(code, userModel);
-//            createNotification(mic);
         }
         else{
             finish();
@@ -173,33 +147,17 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
 
     }
 
-    private void callAllUsers(List<UserModel> userList) {
-        StringBuilder stringBuilder = new StringBuilder("[");
-        for (int i = 0; i < userList.size(); i++) {
-            stringBuilder.append("'").append(userList.get(i).getUserId()).append(i == userList.size() - 1 ? "']" : "',");
-        }
-        callJavaScript("javascript:startCall(" + stringBuilder.toString() + ");");
-    }
-
-
-    public void callJavaScript(String func){
-        webView.post(new Runnable() {
-            @Override
-            public void run() {
-                webView.evaluateJavascript(func,null);
-            }
-        });
-    }
-
 
     public void mic(View view) {
-        toogleMic();
-        //createNotification(mic);
+        toogleMic(true);
     }
 
-    private void toogleMic() {
+    private void toogleMic(boolean isTap) {
         mic = !mic;
-        callJavaScript("javascript:toggleAudio(\""+!mic+"\")");
+        if (isTap){
+            CallService.listener.onToogleMic();
+        }
+
         if(mic){
             micBtn.setImageResource(R.drawable.mic_off);
         }
@@ -213,67 +171,17 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
     @Override
     protected void onDestroy() {
         disconnect();
-
+        listener = null;
         super.onDestroy();
     }
     private void disconnect() {
         callBtn.setImageResource(R.drawable.call_end);
         micBtn.setVisibility(View.GONE);
-//        if (webView != null && webView.getParent() != null) {
-//            webView.loadUrl("");
-//            callJavaScript("javascript:endCall()");
-//            callBtn.setImageResource(R.drawable.call_end);
-//            micBtn.setVisibility(View.GONE);
-//            FirebaseUtils.removeUserData(code, userModel);
-//            Toast.makeText(this, "Disconnected!", Toast.LENGTH_SHORT).show();
-//            notificationManager.cancelAll();
-//        }
-    }
-
-
-    private void createNotification(boolean isMute) {
-        listener = this;
-        // Create an explicit intent for the activity that handles the button actions
-        Intent intent = new Intent(this, CallNotificationActionReceiver.class);
-        intent.setAction("com.testing.testingapp.ACTION_MUTE_HANGUP");
-        intent.putExtra("requestCode", REQUEST_CODE_MUTE);
-
-        PendingIntent mutePendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE_MUTE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        intent.putExtra("requestCode", REQUEST_CODE_HANGUP);
-        PendingIntent hangupPendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE_HANGUP, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        String muteLabel = isMute? "Unmute" : "Mute";
-        // Create the notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.call)
-                .setContentTitle("Joining Call")
-                .setContentText("Tap to manage the call")
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .addAction(R.drawable.mic_on, muteLabel, mutePendingIntent)
-                .addAction(R.drawable.call_end, "Hangup", hangupPendingIntent)
-                .setAutoCancel(true)
-                .setOngoing(true);
-
-        notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (notificationManager != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                // Create the notification channel for Android Oreo and above
-                NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-                channel.enableLights(true);
-                channel.setLightColor(Color.RED);
-
-
-                notificationManager.createNotificationChannel(channel);
-            }
-            notificationManager.notify(NOTIFICATION_ID, builder.build());
-
-        }
     }
 
     @Override
     public void OnToogleMic() {
-        toogleMic();
-        createNotification(mic);
+        toogleMic(false);
     }
 
     @Override
