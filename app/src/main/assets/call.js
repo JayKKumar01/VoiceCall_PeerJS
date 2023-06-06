@@ -48,6 +48,21 @@ function listen() {
     })
 }
 
+function muteAllAudioElements(mute) {
+  // Get the <div> element
+  var div = document.getElementById('box');
+
+  // Get all audio elements within the <div>
+  var audioElements = div.getElementsByTagName('audio');
+
+  // Loop through each audio element and mute/unmute it
+  for (var i = 0; i < audioElements.length; i++) {
+    audioElements[i].muted = mute;
+  }
+}
+
+
+
 function createAudioElement(remoteStream) {
     const audioContainer = document.getElementById('box')
     const audioElement = document.createElement('audio')

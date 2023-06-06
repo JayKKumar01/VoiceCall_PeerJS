@@ -132,8 +132,9 @@ public class CallService extends Service implements CallServiceListener,Data{
 
     @Override
     public void onToogleDeafen() {
-        Toast.makeText(this, "Defean", Toast.LENGTH_SHORT).show();
         isDeafen = !isDeafen;
+        callJavaScript("javascript:toggleAudio(\""+!isDeafen+"\")");
+        callJavaScript("javascript:muteAllAudioElements("+isDeafen+")");
         createNotification(isMute,isDeafen);
     }
 
@@ -156,11 +157,13 @@ public class CallService extends Service implements CallServiceListener,Data{
 
 
         Intent callIntent = new Intent(this,CallActivity.class);
+
         callIntent.putExtra("userModel", userModel);
         callIntent.putExtra("code", code);
         callIntent.putExtra("type","pendingIntent");
         callIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, callIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, callIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         // Create an explicit intent for the activity that handles the button actions
         Intent intent = new Intent(this, CallNotificationActionReceiver.class);
         intent.setAction("com.testing.testingapp.ACTION_MUTE_HANGUP");
@@ -177,7 +180,7 @@ public class CallService extends Service implements CallServiceListener,Data{
         // Create the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.call)
-                .setContentTitle("Joining Call")
+                .setContentTitle("Voice Connected")
                 .setContentText("Tap to manage the call")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .addAction(R.drawable.call_end, "Disconnect", hangupPendingIntent)

@@ -43,14 +43,12 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
 
     private TextView roomCodeTV, userNameTV;
     private RecyclerView recyclerViewUsers;
-    private ImageView callBtn,micBtn;
+    private ImageView callBtn,micBtn,deafenBtn;
     private UserAdapter userAdapter;
     private List<UserModel> userList;
     private String code;
 
     UserModel userModel;
-    public static boolean call,mic;
-    private NotificationManager notificationManager;
     public static NotificationListener listener;
 
     @Override
@@ -63,7 +61,6 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
 
         if (userModel != null) {
             userNameTV.setText(userModel.getName());
-            //setupWebView();
         }
 
         if (code != null) {
@@ -79,6 +76,7 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
         recyclerViewUsers.setLayoutManager(new LinearLayoutManager(this));
         callBtn = findViewById(R.id.callBtn);
         micBtn = findViewById(R.id.micBtn);
+        deafenBtn = findViewById(R.id.deafenBtn);
 
         // Retrieve UserModel and code from the intent
         userModel = (UserModel) getIntent().getSerializableExtra("userModel");
@@ -95,15 +93,19 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
         if (getIntent().getStringExtra("type") != null && getIntent().getStringExtra("type").equals("create")){
             serviceIntent.putExtra("type", "create");
             callBtn.setImageResource(R.drawable.call);
-            call = true;
+            Info.isCallActive = true;
             micBtn.setVisibility(View.VISIBLE);
+            deafenBtn.setVisibility(View.VISIBLE);
             //createNotification(mic);
         }
         else if (getIntent().getStringExtra("type") != null && getIntent().getStringExtra("type").equals("pendingIntent")){
             pendingIntent = true;
             callBtn.setImageResource(R.drawable.call);
-            call = true;
+            Info.isCallActive = true;
             micBtn.setVisibility(View.VISIBLE);
+            deafenBtn.setVisibility(View.VISIBLE);
+            setMicImage();
+            setDeafenImage();
         }
 
         if (!pendingIntent){
@@ -134,11 +136,12 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
     }
 
     public void joinCall(View view){
-        call = !call;
-        CallService.listener.onJoinCall(call,userList);
-        if(call){
+        Info.isCallActive = !Info.isCallActive;
+        CallService.listener.onJoinCall(Info.isCallActive,userList);
+        if(Info.isCallActive){
             callBtn.setImageResource(R.drawable.call);
             micBtn.setVisibility(View.VISIBLE);
+            deafenBtn.setVisibility(View.VISIBLE);
         }
         else{
             finish();
@@ -151,14 +154,35 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
     public void mic(View view) {
         toogleMic(true);
     }
-
+    public void deafen(View view) {
+        toogleDeafen(true);
+    }
     private void toogleMic(boolean isTap) {
-        mic = !mic;
+        Info.isMute = !Info.isMute;
         if (isTap){
             CallService.listener.onToogleMic();
         }
+        setMicImage();
+    }
+    private void toogleDeafen(boolean isTap) {
+        Info.isDeafen = !Info.isDeafen;
+        if (isTap){
+            CallService.listener.onToogleDeafen();
+        }
+        setDeafenImage();
+    }
 
-        if(mic){
+    private void setDeafenImage() {
+        if(Info.isDeafen){
+            deafenBtn.setImageResource(R.drawable.deafen_on);
+        }
+        else{
+            deafenBtn.setImageResource(R.drawable.deafen_off);
+        }
+    }
+
+    private void setMicImage() {
+        if(Info.isMute){
             micBtn.setImageResource(R.drawable.mic_off);
         }
         else{
@@ -167,26 +191,30 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
     }
 
 
-
     @Override
     protected void onDestroy() {
         disconnect();
-        listener = null;
         super.onDestroy();
     }
     private void disconnect() {
         callBtn.setImageResource(R.drawable.call_end);
         micBtn.setVisibility(View.GONE);
+        deafenBtn.setVisibility(View.GONE);
     }
 
     @Override
-    public void OnToogleMic() {
+    public void onToogleMic() {
         toogleMic(false);
     }
 
     @Override
-    public void OnHangUp() {
+    public void onHangUp() {
         finish();
+    }
+
+    @Override
+    public void onDeafen() {
+        toogleDeafen(false);
     }
 
 

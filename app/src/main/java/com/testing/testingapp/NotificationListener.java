@@ -1,6 +1,7 @@
 package com.testing.testingapp;
 
 public interface NotificationListener {
-    void OnToogleMic();
-    void OnHangUp();
+    void onToogleMic();
+    void onHangUp();
+    void onDeafen();
 }
