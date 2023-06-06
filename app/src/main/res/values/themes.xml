@@ -1,0 +1,13 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+        <!-- Define your theme colors --><!-- Replace with your desired theme color -->
+
+        <!-- Define your base theme -->
+        <style name="Theme.TestingApp" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+            <!-- Customize your light theme here -->
+            <item name="colorPrimary">@color/theme_color</item>
+            <item name="android:statusBarColor">@color/theme_color</item>
+        </style>
+
+        <!-- Apply the base theme -->
+    </resources>
+
