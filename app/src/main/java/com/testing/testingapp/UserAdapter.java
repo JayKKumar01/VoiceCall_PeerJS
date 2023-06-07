@@ -31,18 +31,20 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         UserModel user = userList.get(position);
         holder.tvUserName.setText(user.getName());
-        if (user.isMute()){
-            holder.mic.setImageResource(R.drawable.mic_off);
-        }else {
-            holder.mic.setImageResource(R.drawable.mic_on);
-        }
+
         if (user.isDeafen()){
             holder.deafen.setVisibility(View.VISIBLE);
             holder.deafen.setImageResource(R.drawable.deafen_on);
+            holder.mic.setImageResource(R.drawable.mic_off);
         }
         else {
             holder.deafen.setVisibility(View.GONE);
             holder.deafen.setImageResource(R.drawable.deafen_off);
+            if (user.isMute()){
+                holder.mic.setImageResource(R.drawable.mic_off);
+            }else {
+                holder.mic.setImageResource(R.drawable.mic_on);
+            }
         }
 
     }

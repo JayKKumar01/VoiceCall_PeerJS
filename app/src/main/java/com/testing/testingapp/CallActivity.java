@@ -15,6 +15,7 @@ import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.PermissionRequest;
@@ -56,6 +57,9 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
 
     UserModel userModel;
     public static NotificationListener listener;
+    TextView timer;
+    private TimerListener timerListner;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,6 +68,7 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
 
 
         listener = this;
+        timerListner = new TimerListener(this);
         initViews();
 
         if (userModel != null) {
@@ -77,6 +82,7 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
     }
 
     private void initViews() {
+        timer = findViewById(R.id.timer);
         roomCodeTV = findViewById(R.id.roomCode);
         userNameTV = findViewById(R.id.userName);
         recyclerViewUsers = findViewById(R.id.recyclerViewUsers);
@@ -102,20 +108,24 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
 
         if (getIntent().getStringExtra("type") != null && getIntent().getStringExtra("type").equals("create")){
             serviceIntent.putExtra("type", "create");
-            callBtn.setImageResource(R.drawable.call);
+            callBtn.setImageResource(R.drawable.call_end);
             Info.isCallActive = true;
             micBtn.setVisibility(View.VISIBLE);
             deafenBtn.setVisibility(View.VISIBLE);
+            timerListner.startTimer(0);
+            timer.setVisibility(View.VISIBLE);
             //createNotification(mic);
         }
         else if (getIntent().getStringExtra("type") != null && getIntent().getStringExtra("type").equals("pendingIntent")){
             pendingIntent = true;
-            callBtn.setImageResource(R.drawable.call);
+            callBtn.setImageResource(R.drawable.call_end);
             Info.isCallActive = true;
             micBtn.setVisibility(View.VISIBLE);
             deafenBtn.setVisibility(View.VISIBLE);
             setMicImage();
             setDeafenImage();
+            timerListner.startTimer((int) ((System.currentTimeMillis()- userModel.getJoinTime())/1000));
+            timer.setVisibility(View.VISIBLE);
         }
 
         if (!pendingIntent){
@@ -147,11 +157,14 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
 
     public void joinCall(View view){
         Info.isCallActive = !Info.isCallActive;
-        CallService.listener.onJoinCall(Info.isCallActive,userList);
+        userModel.setJoinTime(System.currentTimeMillis());
+        CallService.listener.onJoinCall(Info.isCallActive,userList,userModel.getJoinTime());
         if(Info.isCallActive){
-            callBtn.setImageResource(R.drawable.call);
+            callBtn.setImageResource(R.drawable.call_end);
             micBtn.setVisibility(View.VISIBLE);
             deafenBtn.setVisibility(View.VISIBLE);
+            timerListner.startTimer(0);
+            timer.setVisibility(View.VISIBLE);
         }
         else{
             finish();
@@ -185,9 +198,11 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
     private void setDeafenImage() {
         if(Info.isDeafen){
             deafenBtn.setImageResource(R.drawable.deafen_on);
+            micBtn.setVisibility(View.GONE);
         }
         else{
             deafenBtn.setImageResource(R.drawable.deafen_off);
+            micBtn.setVisibility(View.VISIBLE);
         }
     }
 
@@ -204,12 +219,14 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
     @Override
     protected void onDestroy() {
         disconnect();
+
         super.onDestroy();
     }
     private void disconnect() {
         callBtn.setImageResource(R.drawable.call_end);
         micBtn.setVisibility(View.GONE);
         deafenBtn.setVisibility(View.GONE);
+        timerListner.endTimer();
     }
 
     @Override
@@ -226,4 +243,24 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
     public void onDeafen() {
         toogleDeafen(false);
     }
+
+    @SuppressLint("DefaultLocale")
+    @Override
+    public void onUpdateTime(int seconds) {
+        int hours = seconds / 3600;
+        int minutes = (seconds % 3600) / 60;
+        int remainingSeconds = seconds % 60;
+
+        StringBuilder timeBuilder = new StringBuilder();
+
+        if (hours >= 1) {
+            timeBuilder.append(String.format("%02d:", hours));
+        }
+
+        timeBuilder.append(String.format("%02d:%02d", minutes, remainingSeconds));
+        String timeString = timeBuilder.toString();
+
+        timer.setText(timeString);
+    }
+
 }

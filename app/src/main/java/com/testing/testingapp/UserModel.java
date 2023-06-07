@@ -7,6 +7,7 @@ public class UserModel implements Serializable {
     private String userId;
     private boolean isMute;
     private boolean isDeafen;
+    private long joinTime;
 
     public UserModel() {
         // Default constructor required for Firebase
@@ -22,6 +23,22 @@ public class UserModel implements Serializable {
         this.userId = userId;
         this.isMute = isMute;
         this.isDeafen = isDeafen;
+    }
+
+    public UserModel(String name, String userId, boolean isMute, boolean isDeafen, long joinTime) {
+        this.name = name;
+        this.userId = userId;
+        this.isMute = isMute;
+        this.isDeafen = isDeafen;
+        this.joinTime = joinTime;
+    }
+
+    public long getJoinTime() {
+        return joinTime;
+    }
+
+    public void setJoinTime(long joinTime) {
+        this.joinTime = joinTime;
     }
 
     public boolean isMute() {

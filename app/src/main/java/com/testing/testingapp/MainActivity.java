@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         String userId = Base.generateRandomString();
-        UserModel userModel = new UserModel(name, userId,false,false);
+        UserModel userModel = new UserModel(name, userId,false,false,System.currentTimeMillis());
 
         if (code == null){
             int randomNumber = new Random().nextInt(1000000);

@@ -103,9 +103,10 @@ public class CallService extends Service implements CallServiceListener,Data{
 
 
     @Override
-    public void onJoinCall(boolean call, List<UserModel> userList) {
+    public void onJoinCall(boolean call, List<UserModel> userList,long joinTime) {
         if(call){
             callAllUsers(userList);
+            userModel.setJoinTime(joinTime);
             FirebaseUtils.updateUserData(code, userModel);
             createNotification(isMute,isDeafen);
         }
