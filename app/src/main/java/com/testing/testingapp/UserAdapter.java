@@ -3,6 +3,7 @@ package com.testing.testingapp;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -30,6 +31,20 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         UserModel user = userList.get(position);
         holder.tvUserName.setText(user.getName());
+        if (user.isMute()){
+            holder.mic.setImageResource(R.drawable.mic_off);
+        }else {
+            holder.mic.setImageResource(R.drawable.mic_on);
+        }
+        if (user.isDeafen()){
+            holder.deafen.setVisibility(View.VISIBLE);
+            holder.deafen.setImageResource(R.drawable.deafen_on);
+        }
+        else {
+            holder.deafen.setVisibility(View.GONE);
+            holder.deafen.setImageResource(R.drawable.deafen_off);
+        }
+
     }
 
     @Override
@@ -39,10 +54,12 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
 
     public static class UserViewHolder extends RecyclerView.ViewHolder {
         TextView tvUserName;
-
+        ImageView mic,deafen;
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
             tvUserName = itemView.findViewById(R.id.tvUserName);
+            mic = itemView.findViewById(R.id.mic);
+            deafen = itemView.findViewById(R.id.deafen);
         }
     }
 }

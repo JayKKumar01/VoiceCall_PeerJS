@@ -27,9 +27,6 @@
         <activity
             android:name=".CallActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout"
-            android:launchMode="singleTask"
-            android:taskAffinity=""
-            android:excludeFromRecents="true"
             android:exported="false" />
 
         <activity

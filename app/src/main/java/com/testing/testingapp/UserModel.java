@@ -5,6 +5,8 @@ import java.io.Serializable;
 public class UserModel implements Serializable {
     private String name;
     private String userId;
+    private boolean isMute;
+    private boolean isDeafen;
 
     public UserModel() {
         // Default constructor required for Firebase
@@ -13,6 +15,29 @@ public class UserModel implements Serializable {
     public UserModel(String name, String userId) {
         this.name = name;
         this.userId = userId;
+    }
+
+    public UserModel(String name, String userId, boolean isMute, boolean isDeafen) {
+        this.name = name;
+        this.userId = userId;
+        this.isMute = isMute;
+        this.isDeafen = isDeafen;
+    }
+
+    public boolean isMute() {
+        return isMute;
+    }
+
+    public void setMute(boolean mute) {
+        isMute = mute;
+    }
+
+    public boolean isDeafen() {
+        return isDeafen;
+    }
+
+    public void setDeafen(boolean deafen) {
+        isDeafen = deafen;
     }
 
     public String getName() {
@@ -30,5 +55,6 @@ public class UserModel implements Serializable {
     public void setUserId(String userId) {
         this.userId = userId;
     }
+
 }
 

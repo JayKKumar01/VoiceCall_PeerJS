@@ -33,20 +33,30 @@ public class FirebaseUtils {
     }
 
     public static void updateUserData(String path, UserModel userModel) {
+
         DatabaseReference databaseReference = getDatabaseReference().child(path);
         databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
+                    boolean isUserAdded = false;
                     // Retrieve the existing list from the database
                     List<UserModel> userList = new ArrayList<>();
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                         UserModel existingUser = snapshot.getValue(UserModel.class);
-                        userList.add(existingUser);
+                        assert existingUser != null;
+                        if (existingUser.getUserId().equals(userModel.getUserId())){
+                            userList.add(userModel);
+                            isUserAdded = true;
+                        }else {
+                            userList.add(existingUser);
+                        }
                     }
 
                     // Add the new user to the existing list
-                    userList.add(userModel);
+                    if (!isUserAdded){
+                        userList.add(userModel);
+                    }
 
                     // Update the database with the updated list
                     databaseReference.setValue(userList);

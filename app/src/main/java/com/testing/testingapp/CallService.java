@@ -8,8 +8,10 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -40,10 +42,13 @@ public class CallService extends Service implements CallServiceListener,Data{
             if (intent.getStringExtra("type") != null && intent.getStringExtra("type").equals("create")){
                 createNotification(isMute, isDeafen);
             }
-        }
 
+        }
+        if (userModel != null) {
+            setupWebView();
+        }
         // Set up the WebView here
-        setupWebView();
+
 
         return START_STICKY;
     }
@@ -71,10 +76,11 @@ public class CallService extends Service implements CallServiceListener,Data{
 //                view.loadUrl("javascript:test()");
                 callJavaScript("javascript:init(\""+ userModel.getUserId() +"\")");
 //                callJavaScript("javascript:test()");
-                Toast.makeText(CallService.this, "Started", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(CallService.this, "Started", Toast.LENGTH_SHORT).show();
             }
 
         });
+        webView.addJavascriptInterface(new JavaScriptInterface(), "Android");
 
         WebSettings webSettings = webView.getSettings();
         webSettings.setDomStorageEnabled(true);
@@ -112,6 +118,8 @@ public class CallService extends Service implements CallServiceListener,Data{
     @Override
     public void onToogleMic() {
         isMute = !isMute;
+        userModel.setMute(isMute);
+        FirebaseUtils.updateUserData(code, userModel);
         callJavaScript("javascript:toggleAudio(\""+!isMute+"\")");
         createNotification(isMute,isDeafen);
     }
@@ -133,6 +141,8 @@ public class CallService extends Service implements CallServiceListener,Data{
     @Override
     public void onToogleDeafen() {
         isDeafen = !isDeafen;
+        userModel.setDeafen(isDeafen);
+        FirebaseUtils.updateUserData(code, userModel);
         callJavaScript("javascript:toggleAudio(\""+!isDeafen+"\")");
         callJavaScript("javascript:muteAllAudioElements("+isDeafen+")");
         createNotification(isMute,isDeafen);
@@ -153,6 +163,7 @@ public class CallService extends Service implements CallServiceListener,Data{
         }
         callJavaScript("javascript:startCall(" + stringBuilder.toString() + ");");
     }
+
     private void createNotification(boolean isMute, boolean isDeafen) {
 
 
@@ -169,11 +180,11 @@ public class CallService extends Service implements CallServiceListener,Data{
         intent.setAction("com.testing.testingapp.ACTION_MUTE_HANGUP");
         intent.putExtra("requestCode", REQUEST_CODE_MUTE);
 
-        PendingIntent mutePendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE_MUTE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent mutePendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE_MUTE, intent, PendingIntent.FLAG_UPDATE_CURRENT |  PendingIntent.FLAG_IMMUTABLE);
         intent.putExtra("requestCode", REQUEST_CODE_HANGUP);
-        PendingIntent hangupPendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE_HANGUP, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent hangupPendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE_HANGUP, intent, PendingIntent.FLAG_UPDATE_CURRENT |  PendingIntent.FLAG_IMMUTABLE);
         intent.putExtra("requestCode",REQUEST_CODE_DEAFEN);
-        PendingIntent deafenPendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE_DEAFEN, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent deafenPendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE_DEAFEN, intent, PendingIntent.FLAG_UPDATE_CURRENT |  PendingIntent.FLAG_IMMUTABLE);
 
         String muteLabel = isMute? "Unmute" : "Mute";
         String deafenLabel = isDeafen? "Undeafen" : "Deafen";
@@ -190,20 +201,43 @@ public class CallService extends Service implements CallServiceListener,Data{
                 .setAutoCancel(true)
                 .setOngoing(true);
 
-        notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        //notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager = getSystemService(NotificationManager.class);
         if (notificationManager != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 // Create the notification channel for Android Oreo and above
                 NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-                channel.enableLights(true);
-                channel.setLightColor(Color.RED);
+                channel.setDescription("channelDescription");
 
 
                 notificationManager.createNotificationChannel(channel);
             }
             startForeground(NOTIFICATION_ID, builder.build());
-            //notificationManager.notify(NOTIFICATION_ID, builder.build());
+            notificationManager.notify(NOTIFICATION_ID, builder.build());
+
+
 
         }
     }
+    public class JavaScriptInterface {
+        @JavascriptInterface
+        public void onCallback(String message) {
+            Toast.makeText(CallService.this, message, Toast.LENGTH_SHORT).show();
+            // Handle the callback in the Java code
+            // You can perform any necessary actions here
+        }
+
+        @JavascriptInterface
+        public void onPeerConnected(){
+            //Toast.makeText(CallService.this, "Peer Connected", Toast.LENGTH_SHORT).show();
+        }
+        @JavascriptInterface
+        public void onStreamStarted(){
+            //Toast.makeText(CallService.this, "Stream Connected", Toast.LENGTH_SHORT).show();
+//            AudioFocusManager audioFocusManager = new AudioFocusManager(CallService.this);
+//            audioFocusManager.requestAudioFocus();
+
+        }
+    }
+
 }

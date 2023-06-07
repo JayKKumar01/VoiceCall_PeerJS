@@ -1,6 +1,7 @@
 package com.testing.testingapp;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -9,6 +10,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
@@ -24,6 +29,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import android.app.Notification;
@@ -50,12 +56,13 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
 
     UserModel userModel;
     public static NotificationListener listener;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_call);
+
+
         listener = this;
         initViews();
 
@@ -81,6 +88,9 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
         // Retrieve UserModel and code from the intent
         userModel = (UserModel) getIntent().getSerializableExtra("userModel");
         code = getIntent().getStringExtra("code");
+        if (getIntent().getStringExtra("notification") != null){
+            findViewById(R.id.noti).setVisibility(View.VISIBLE);
+        }
         boolean pendingIntent = false;
 
         Intent serviceIntent = new Intent(this, CallService.class);
@@ -216,6 +226,4 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
     public void onDeafen() {
         toogleDeafen(false);
     }
-
-
 }

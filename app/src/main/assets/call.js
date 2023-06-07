@@ -3,6 +3,7 @@ let peer
 let localStream
 let remoteStream
 
+
 function init(userId) {
     peer = new Peer(userId, {
         port: 443,
@@ -26,20 +27,24 @@ audio.play()
 function listen() {
     peer.on('call', (call) => {
         navigator.mediaDevices.getUserMedia({
-            audio: {
-                        echoCancellation: true,
-                        echoCancellationType: { ideal: "system" },
-                        channelCount: 1,
-                        sampleRate: 48000,
-                        noiseSuppression: true,
-                        autoGainControl: true,
-                        latency: 0.003
-                    },
-                    video: false,
+            audio: true,
+            video: false
+//            audio: {
+//                        echoCancellation: true,
+//                        echoCancellationType: { ideal: "system" },
+//                        channelCount: 1,
+//                        sampleRate: 48000,
+//                        noiseSuppression: true,
+//                        autoGainControl: true,
+//                        latency: 0.003
+//                    },
+//                    video: false,
         }).then((stream) => {
+
             localStream = stream
             call.answer(stream)
             call.on('stream', (remoteStream) => {
+                Android.onStreamStarted()
                 createAudioElement(remoteStream)
             })
         }).catch((error) => {
@@ -48,7 +53,10 @@ function listen() {
     })
 }
 
+var isMuted = false
+
 function muteAllAudioElements(mute) {
+isMuted = mute;
   // Get the <div> element
   var div = document.getElementById('box');
 
@@ -67,6 +75,7 @@ function createAudioElement(remoteStream) {
     const audioContainer = document.getElementById('box')
     const audioElement = document.createElement('audio')
     audioElement.autoplay = true
+    audioElement.muted = isMuted;
 //    audioElement.controls = true
     audioContainer.appendChild(audioElement)
     audioElement.srcObject = remoteStream
@@ -75,22 +84,15 @@ function createAudioElement(remoteStream) {
 
 function startCall(otherUserIds) {
     navigator.mediaDevices.getUserMedia({
-        audio: {
-            echoCancellation: true,
-            echoCancellationType: { ideal: "system" },
-            channelCount: 1,
-            sampleRate: 48000,
-            noiseSuppression: true,
-            autoGainControl: true,
-            latency: 0.003
-        },
-        video: false,
+        audio: true,
+        video: false
     }).then((stream) => {
         localStream = stream;
         otherUserIds.forEach((otherUserId) => {
             const call = peer.call(otherUserId, stream);
             call.on('stream', (remoteStream) => {
-                createAudioElement(remoteStream);
+                Android.onStreamStarted()
+                createAudioElement(remoteStream)
             });
         });
     }).catch((error) => {

@@ -8,31 +8,30 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 
 @SuppressLint("DefaultLocale")
 public class MainActivity extends AppCompatActivity {
+    private static final int NOTIFICATION_PERMISSION_CODE = 112;
+    private static final String NOTIFICATION_PERMISSION_CODE_STR = "112";
     String[] permissions = {Manifest.permission.RECORD_AUDIO};
     private int reqCode = 1;
 
     private TextInputEditText etJoinName,etCode;
     private Button btnJoin;
+    private boolean noPermission = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +47,17 @@ public class MainActivity extends AppCompatActivity {
             askPermission();
             return;
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !shouldShowRequestPermissionRationale(NOTIFICATION_PERMISSION_CODE_STR)){
+            if (!noPermission){
+                Toast.makeText(this, "No Notification permission", Toast.LENGTH_SHORT).show();
+                getNotificationPermission();
+                noPermission = true;
+                return;
+            }
+        }else {
+            noPermission = false;
+        }
+
         if (!(etJoinName.getText() != null && !etJoinName.getText().toString().isEmpty())){
             Toast.makeText(this, "Please Enter Name", Toast.LENGTH_SHORT).show();
             return;
@@ -62,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         String userId = Base.generateRandomString();
-        UserModel userModel = new UserModel(name, userId);
+        UserModel userModel = new UserModel(name, userId,false,false);
 
         if (code == null){
             int randomNumber = new Random().nextInt(1000000);
@@ -73,6 +83,9 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("userModel", userModel);
             intent.putExtra("code", code);
             intent.putExtra("type","create");
+            if (noPermission){
+                intent.putExtra("notification","no");
+            }
             startActivity(intent);
             return;
         }
@@ -87,6 +100,9 @@ public class MainActivity extends AppCompatActivity {
                     Intent intent = new Intent(MainActivity.this, CallActivity.class);
                     intent.putExtra("userModel", userModel);
                     intent.putExtra("code", code1);
+                    if (noPermission){
+                        intent.putExtra("notification","no");
+                    }
                     startActivity(intent);
                 } else {
                     Toast.makeText(MainActivity.this, "Code Does not exists", Toast.LENGTH_SHORT).show();
@@ -103,6 +119,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void getNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_CODE);
+        }
+    }
 
 
     void askPermission(){
