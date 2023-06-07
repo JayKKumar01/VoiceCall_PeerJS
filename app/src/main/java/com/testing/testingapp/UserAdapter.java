@@ -59,7 +59,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         ImageView mic,deafen;
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvUserName = itemView.findViewById(R.id.tvUserName);
+            tvUserName = itemView.findViewById(R.id.item_name);
             mic = itemView.findViewById(R.id.mic);
             deafen = itemView.findViewById(R.id.deafen);
         }
