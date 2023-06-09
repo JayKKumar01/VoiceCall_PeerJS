@@ -10,7 +10,9 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
@@ -32,6 +34,7 @@ public class CallService extends Service implements CallServiceListener,Data{
 
     public static CallServiceListener listener;
     public static boolean isMute, isDeafen;
+    private int max = 0;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -224,6 +227,7 @@ public class CallService extends Service implements CallServiceListener,Data{
         @JavascriptInterface
         public void onCallback(String message) {
             Toast.makeText(CallService.this, message, Toast.LENGTH_SHORT).show();
+            handler.post(runnable);
             // Handle the callback in the Java code
             // You can perform any necessary actions here
         }
@@ -239,6 +243,25 @@ public class CallService extends Service implements CallServiceListener,Data{
 //            audioFocusManager.requestAudioFocus();
 
         }
+        @JavascriptInterface
+        public void onPrintIntensity(String otherUserId,int averageIntensity){
+
+            if (max<averageIntensity){
+                max = averageIntensity;
+            }
+
+            Log.d("intensity",otherUserId+": "+averageIntensity);
+            //Toast.makeText(CallService.this, "Peer Connected", Toast.LENGTH_SHORT).show();
+        }
     }
+    Handler handler = new Handler();
+    Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            Log.d("intensityMax",max+" :max");
+            max = 0;
+            handler.postDelayed(this,5000);
+        }
+    };
 
 }

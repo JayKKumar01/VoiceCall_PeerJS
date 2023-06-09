@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,6 +30,7 @@ import android.widget.Toast;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+import com.testing.testingapp.gestures.OnTouch;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,13 +61,14 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
     public static NotificationListener listener;
     TextView timer;
     private TimerListener timerListner;
+    public static Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_call);
-
+        context = this;
 
         listener = this;
         timerListner = new TimerListener(this);
@@ -81,15 +84,19 @@ public class CallActivity extends AppCompatActivity implements NotificationListe
         updateUsers();
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void initViews() {
         timer = findViewById(R.id.timer);
         roomCodeTV = findViewById(R.id.roomCode);
         userNameTV = findViewById(R.id.userName);
         recyclerViewUsers = findViewById(R.id.recyclerViewUsers);
-        recyclerViewUsers.setLayoutManager(new LinearLayoutManager(this));
+        recyclerViewUsers.setLayoutManager(new GridLayoutManager(this,2));
         callBtn = findViewById(R.id.callBtn);
+        callBtn.setOnTouchListener(new OnTouch(this));
         micBtn = findViewById(R.id.micBtn);
+        micBtn.setOnTouchListener(new OnTouch(this));
         deafenBtn = findViewById(R.id.deafenBtn);
+        deafenBtn.setOnTouchListener(new OnTouch(this));
 
         // Retrieve UserModel and code from the intent
         userModel = (UserModel) getIntent().getSerializableExtra("userModel");

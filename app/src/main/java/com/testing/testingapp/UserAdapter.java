@@ -9,6 +9,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.testing.testingapp.gestures.ConstraintViewResizer;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,9 +45,12 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             if (user.isMute()){
                 holder.mic.setImageResource(R.drawable.mic_off);
             }else {
-                holder.mic.setImageResource(R.drawable.mic_on);
+                holder.mic.setImageResource(R.drawable.mic_img);
             }
         }
+
+        ConstraintViewResizer resizer = new ConstraintViewResizer(holder.view);
+        resizer.randomSize();
 
     }
 
@@ -57,11 +62,13 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     public static class UserViewHolder extends RecyclerView.ViewHolder {
         TextView tvUserName;
         ImageView mic,deafen;
+        View view;
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
             tvUserName = itemView.findViewById(R.id.item_name);
             mic = itemView.findViewById(R.id.mic);
             deafen = itemView.findViewById(R.id.deafen);
+            view = itemView.findViewById(R.id.item_view);
         }
     }
 }

@@ -1,17 +1,26 @@
 package com.testing.testingapp;
 
+import androidx.annotation.ColorInt;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -140,8 +149,52 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    @SuppressLint("ResourceAsColor")
     public void test(View view) {
-        Intent serviceIntent = new Intent(this, WebViewService.class);
-        startService(serviceIntent);
+        Intent intent = new Intent(this,ImageActivity.class);
+        startActivity(intent);
     }
+
+
+
+//    public void setMicColor(Context context, @DrawableRes int micDrawableRes, @ColorInt int color, int value, ImageView imageView) {
+//        Drawable micDrawable = ContextCompat.getDrawable(context, micDrawableRes);
+//
+//        if (micDrawable != null) {
+//            micDrawable = micDrawable.mutate(); // Create a mutable copy of the drawable
+//            String pathData = getPathData(value);
+//            micDrawable.setTint(color);
+//            micDrawable.setTintMode(PorterDuff.Mode.SRC_IN);
+//            micDrawable.setColorFilter(color, PorterDuff.Mode.SRC_IN);
+//            micDrawable.setAlpha(255);
+//            micDrawable.setPathData(pathData);
+//            micDrawable = micDrawable.mutate(); // Create a mutable copy of the drawable
+//            micDrawable.setTint(color);
+//            int alpha = (int) (255 * (value / 100f)); // Calculate the alpha value based on the provided value
+//            micDrawable.setAlpha(alpha);
+//            imageView.setImageDrawable(micDrawable);
+//        }
+//    }
+
+    public void setMicColor(Context context, @DrawableRes int micColoredRes, @DrawableRes int micUnfilledRes, @ColorInt int color, int value, ImageView imageView) {
+        Drawable micColoredDrawable = ContextCompat.getDrawable(context, micColoredRes);
+        Drawable micUnfilledDrawable = ContextCompat.getDrawable(context, micUnfilledRes);
+
+        if (micColoredDrawable != null && micUnfilledDrawable != null) {
+            micColoredDrawable = micColoredDrawable.mutate(); // Create a mutable copy of the colored mic drawable
+            micUnfilledDrawable = micUnfilledDrawable.mutate(); // Create a mutable copy of the unfilled mic drawable
+
+            micColoredDrawable.setColorFilter(color, PorterDuff.Mode.SRC_IN);
+
+            float fillRatio = value / 100f;
+            int fillHeight = (int) (micColoredDrawable.getIntrinsicHeight() * fillRatio);
+            micUnfilledDrawable.setBounds(0, fillHeight, micUnfilledDrawable.getIntrinsicWidth(), micUnfilledDrawable.getIntrinsicHeight());
+
+            Drawable[] layers = {micColoredDrawable, micUnfilledDrawable};
+            LayerDrawable layerDrawable = new LayerDrawable(layers);
+            imageView.setImageDrawable(layerDrawable);
+        }
+    }
+
+
 }
